@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Realtime PostgreSQL Table</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Data Realtime dari PostgreSQL</h1>
+      <table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div id="status">Koneksi backend: <span id="statusText">Terhubung</span></div>
+      <div id="dbStatus">Status database: <span id="dbStatusText">Menunggu...</span></div>
+    </div>
+
+    <script>
+      let socket;
+      let currentData = [];
+      const tableHead = document.getElementById('tableHead');
+      const tableBody = document.getElementById('tableBody');
+      const statusText = document.getElementById('statusText');
+      const dbStatusText = document.getElementById('dbStatusText');
+
+      function updateTable(data) {
+        tableHead.innerHTML = '';
+        tableBody.innerHTML = '';
+
+        if (data.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="100%">Tidak ada data</td></tr>';
+          return;
+        }
+
+        const headers = Object.keys(data[0]);
+        const headerRow = document.createElement('tr');
+        headers.forEach((h) => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headerRow.appendChild(th);
+        });
+        tableHead.appendChild(headerRow);
+
+        data.forEach((row) => {
+          const tr = document.createElement('tr');
+          headers.forEach((h) => {
+            const td = document.createElement('td');
+            td.textContent = row[h];
+            tr.appendChild(td);
+          });
+          tableBody.appendChild(tr);
+        });
+      }
+
+      function connectSocket() {
+        socket = io();
+
+        socket.on('data_update', (data) => {
+          currentData = data;
+          updateTable(data);
+        });
+
+        socket.on('db_status', (msg) => {
+          dbStatusText.textContent = msg;
+          dbStatusText.style.color = msg === 'Connected' ? 'green' : 'red';
+        });
+
+        socket.on('connect', () => {
+          statusText.textContent = 'Terhubung';
+          statusText.style.color = 'green';
+        });
+
+        socket.on('disconnect', () => {
+          statusText.textContent = 'Terputus';
+          statusText.style.color = 'red';
+          updateTable(currentData);
+        });
+
+        socket.on('error', (err) => {
+          console.error('WebSocket error:', err);
+          updateTable(currentData);
+        });
+      }
+
+      window.addEventListener('DOMContentLoaded', connectSocket);
+    </script>
+  </body>
+</html>
