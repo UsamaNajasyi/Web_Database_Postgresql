@@ -63,7 +63,7 @@ io.on('connection', async (socket) => {
   socket.emit('db_status', 'Connected');
 
   try {
-    const result = await pool.query('SELECT * FROM users ORDER BY id DESC LIMIT 10');
+    const result = await pool.query('SELECT * FROM your_table ORDER BY id DESC LIMIT 10');
     socket.emit('data_update', result.rows);
   } catch (err) {
     console.error('⚠️ Gagal mengambil data awal:', err.message);
@@ -73,7 +73,7 @@ io.on('connection', async (socket) => {
 
 setInterval(async () => {
   try {
-    const result = await pool.query('SELECT * FROM users ORDER BY id DESC LIMIT 10');
+    const result = await pool.query('SELECT * FROM your_table ORDER BY id DESC LIMIT 10');
     io.emit('data_update', result.rows);
     console.log('berhasil ambil data dari database');
 
